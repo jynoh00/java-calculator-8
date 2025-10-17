@@ -13,11 +13,6 @@ public class Application {
             System.out.println("덧셈할 문자열을 입력해 주세요.");
             String inputStr = Console.readLine();
 
-            if (inputStr.isEmpty()){
-                System.out.println("결과 : " + 0);
-                return;
-            }
-
             // 커스텀 구분자
             char[] customSeparator = getCustomSeparator(inputStr); // 커스텀 구분자 없음 -> '1'
 //            System.out.println(custom_separator);
@@ -26,18 +21,18 @@ public class Application {
             if (customSeparator[1] == HAS_CUSTOM_SEPARATOR_FLAG && Character.isDigit(customSeparator[0])) throw new IllegalArgumentException("커스텀 구분자는 숫자일 수 없음.");
             inputStr = customSeparator[1] == HAS_CUSTOM_SEPARATOR_FLAG ? inputStr.substring(5) : inputStr;
 
-            // ex) "//;\n" -> 0
+            // 빈 입력 처리 : ex) "//;\n" -> 0, "" -> 0
             if (inputStr.isEmpty()){
                 System.out.println("결과 : " + 0);
                 return;
             }
 
             // 구분자 설정
-            String separators = customSeparator[1] == 'f'? ",|:" : ",|:|" + Pattern.quote(String.valueOf(customSeparator[0]));
+            String separators = customSeparator[1] == NO_CUSTOM_SEPARATOR_FLAG? ",|:" : ",|:|" + Pattern.quote(String.valueOf(customSeparator[0]));
             String[] resultArr = inputStr.split(separators);
 
-            int separator_count = countSeparators(inputStr, customSeparator[0], customSeparator[1] == HAS_CUSTOM_SEPARATOR_FLAG);
-            if (separator_count+1 != resultArr.length) throw new IllegalArgumentException("구분자와 숫자의 개수가 형식과 맞지 않음.");
+            int separatorCount = countSeparators(inputStr, customSeparator[0], customSeparator[1] == HAS_CUSTOM_SEPARATOR_FLAG);
+            if (separatorCount +1 != resultArr.length) throw new IllegalArgumentException("구분자와 숫자의 개수가 형식과 맞지 않음.");
 
             long answer = 0;
             for (String s : resultArr){
@@ -48,7 +43,7 @@ public class Application {
                     if (number <= 0) throw new IllegalArgumentException("양수값만 입력 할 수 있음.");
                     answer += number;
                 }catch(NumberFormatException e){
-                    throw new IllegalArgumentException("입력 숫자값이 int 범위를 벗어남.");
+                    throw new IllegalArgumentException("숫자형 포맷 오류 발생.");
                 }
             }
 
@@ -78,10 +73,10 @@ public class Application {
         return returnArr;
     }
 
-    public static int countSeparators(String str, char custom_separator, boolean has_custom){
+    public static int countSeparators(String str, char customSeparator, boolean hasCustom){
         int returnCnt = 0;
         for (char c : str.toCharArray()){
-            if (c == ',' || c == ':' || (has_custom && c == custom_separator)) returnCnt++;
+            if (c == ',' || c == ':' || (hasCustom && c == customSeparator)) returnCnt++;
         }
 
         return returnCnt;
