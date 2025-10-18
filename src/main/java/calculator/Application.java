@@ -4,50 +4,16 @@ import camp.nextstep.edu.missionutils.Console;
 import java.util.regex.Pattern;
 
 public class Application {
-    private static final char NO_CUSTOM_SEPARATOR = '1';
-    private static final char HAS_CUSTOM_SEPARATOR_FLAG = 't';
-    private static final char NO_CUSTOM_SEPARATOR_FLAG = 'f';
+    private static final String CUSTOM_SEPARATOR_BEFORE = "//";
+    private static final String CUSTOM_SEPARATOR_AFTER = "\\n";
+    private static final int CUSTOM_SEPARATOR_LENGTH = 5;
+    private static final String DEFAULT_SEPARATORS = ",|:";
 
     public static void main(String[] args) {
         try{
-            System.out.println("덧셈할 문자열을 입력해 주세요.");
-            String inputStr = Console.readLine();
-
-            // 커스텀 구분자
-            char[] customSeparator = getCustomSeparator(inputStr); // 커스텀 구분자 없음 -> '1'
-//            System.out.println(custom_separator);
-
-            // 커스텀세파레이터가 숫자면 에러 처리
-            if (customSeparator[1] == HAS_CUSTOM_SEPARATOR_FLAG && Character.isDigit(customSeparator[0])) throw new IllegalArgumentException("커스텀 구분자는 숫자일 수 없음.");
-            inputStr = customSeparator[1] == HAS_CUSTOM_SEPARATOR_FLAG ? inputStr.substring(5) : inputStr;
-
-            // 빈 입력 처리 : ex) "//;\n" -> 0, "" -> 0
-            if (inputStr.isEmpty()){
-                System.out.println("결과 : " + 0);
-                return;
-            }
-
-            // 구분자 설정
-            String separators = customSeparator[1] == NO_CUSTOM_SEPARATOR_FLAG? ",|:" : ",|:|" + Pattern.quote(String.valueOf(customSeparator[0]));
-            String[] resultArr = inputStr.split(separators);
-
-            int separatorCount = countSeparators(inputStr, customSeparator[0], customSeparator[1] == HAS_CUSTOM_SEPARATOR_FLAG);
-            if (separatorCount +1 != resultArr.length) throw new IllegalArgumentException("구분자와 숫자의 개수가 형식과 맞지 않음.");
-
-            long answer = 0;
-            for (String s : resultArr){
-                if (s.isEmpty()) throw new IllegalArgumentException("빈 값은 입력할 수 없음.");
-
-                try{
-                    int number = Integer.parseInt(s);
-                    if (number <= 0) throw new IllegalArgumentException("양수값만 입력 할 수 있음.");
-                    answer += number;
-                }catch(NumberFormatException e){
-                    throw new IllegalArgumentException("숫자형 포맷 오류 발생.");
-                }
-            }
-
-            System.out.println("결과 : " + answer);
+            String inputStr = readInput();
+            long answer = calculate(inputStr);
+            printAnswer(answer);
         }catch(IllegalArgumentException e){
             System.out.println("잘못된 입력: " + e.getMessage());
             throw e;
@@ -56,29 +22,129 @@ public class Application {
         }
     }
 
-    public static char[] getCustomSeparator(String str){
-        char[] returnArr = {NO_CUSTOM_SEPARATOR, NO_CUSTOM_SEPARATOR_FLAG}; // 커스텀 구분자, 커스텀 구분자 존재 t/f
-
-        if (str.startsWith("//")){
-            if (str.length() < 5) throw new IllegalArgumentException("커스텀 구분자 형식 불일치");
-
-            char separator = str.charAt(2);
-
-            if (str.charAt(3) == '\\' && str.charAt(4) == 'n'){
-                returnArr[0] = separator;
-                returnArr[1] = HAS_CUSTOM_SEPARATOR_FLAG;
-            }else throw new IllegalArgumentException("커스텀 구분자 형식 불일치");
-        }
-
-        return returnArr;
+    private static String readInput(){
+        System.out.println("덧셈할 문자열을 입력해주세요.");
+        return Console.readLine();
     }
 
-    public static int countSeparators(String str, char customSeparator, boolean hasCustom){
-        int returnCnt = 0;
-        for (char c : str.toCharArray()){
-            if (c == ',' || c == ':' || (hasCustom && c == customSeparator)) returnCnt++;
+    // 합 연산 결과 리턴
+    private static long calculate(String inputStr){
+        if (inputStr.isEmpty()) return 0;
+
+        CustomSeparator separator = extractCustomSeparator(inputStr);
+        String numberString = getNumberString(inputStr, separator);
+
+        if (numberString.isEmpty()) return 0;
+
+        return sumNumbers(numberString, separator);
+    }
+
+    // 커스텀 구분자 추출
+    private static CustomSeparator extractCustomSeparator(String inputStr){
+        if (!inputStr.startsWith(CUSTOM_SEPARATOR_BEFORE)) return new CustomSeparator(null, false);
+
+        checkCustomSeparatorFormat(inputStr);
+        char separator = inputStr.charAt(2);
+        checkSeparatorIsNotDigit(separator);
+
+        return new CustomSeparator(separator, true);
+    }
+
+    // 커스텀 구분자 형식 확인
+    private static void checkCustomSeparatorFormat(String inputStr){
+        if (inputStr.length() < CUSTOM_SEPARATOR_LENGTH) throw new IllegalArgumentException("커스텀 구분자 형식 오류.");
+        if (!inputStr.substring(3, 5).equals(CUSTOM_SEPARATOR_AFTER)) throw new IllegalArgumentException("커스텀 구분자 형식 오류.");
+    }
+
+    // 커스텀 구분자 숫자 여부 확인
+    private static void checkSeparatorIsNotDigit(char separator){
+        if (Character.isDigit(separator)) throw new IllegalArgumentException("커스텀 구분자 숫자 불가.");
+    }
+
+    // 구분자 설정 부분 문자열에서 제거
+    private static String getNumberString(String inputStr, CustomSeparator separator){
+        if (separator.hasCustomSeparator()) return inputStr.substring(CUSTOM_SEPARATOR_LENGTH);
+        return inputStr;
+    }
+
+    // 문자열 분리 후 합 연산
+    private static long sumNumbers(String numberString, CustomSeparator separator){
+        String separators = buildSeparatorPattern(separator);
+        String[] numbers = numberString.split(separators);
+
+        checkNumberCount(numberString, numbers.length, separator);
+
+        long sum = 0;
+        for (String number : numbers){
+            sum += parseAndCheckNumber(number);
         }
 
-        return returnCnt;
+        return sum;
+    }
+
+    // 구분자 설정 값 리턴
+    private static String buildSeparatorPattern(CustomSeparator separator){
+        if (!separator.hasCustomSeparator()) return DEFAULT_SEPARATORS;
+        return DEFAULT_SEPARATORS + "|" + Pattern.quote(String.valueOf(separator.getSeparator()));
+    }
+
+    // 연산자, 피연산자 개수 확인
+    private static void checkNumberCount(String numberString, int numberCount, CustomSeparator separator){
+        int separatorCount = countSeparators(numberString, separator);
+        if (separatorCount+1 != numberCount) throw new IllegalArgumentException("구분자와 숫자 개수 형식 불일치.");
+    }
+
+    // 구분자 개수 리턴
+    private static int countSeparators(String numberString, CustomSeparator separator){
+        int count = 0;
+        for (char c : numberString.toCharArray()){
+            if (isSeparator(c, separator)) count++;
+        }
+
+        return count;
+    }
+
+    // 구분자 여부 boolean 리턴
+    private static boolean isSeparator(char c, CustomSeparator separator){
+        if (c == ',' || c == ':') return true;
+        return separator.hasCustomSeparator() && c == separator.getSeparator();
+    }
+
+    // 입력 값 int 범위 여부 확인 및 숫자형 포맷 여부 확인
+    private static int parseAndCheckNumber(String number){
+        if (number.isEmpty()) throw new IllegalArgumentException("빈 값 입력 불가.");
+
+        try{
+            int num = Integer.parseInt(number);
+            checkPositive(num);
+
+            return num;
+        }catch(NumberFormatException e){
+            throw new IllegalArgumentException("올바른 숫자 형식이 아님.");
+        }
+    }
+
+    // 양수 여부 판단
+    private static void checkPositive(int number){
+        if (number <= 0) throw new IllegalArgumentException("양수만 입력 가능.");
+    }
+
+    // output 출력
+    private static void printAnswer(long answer){
+        System.out.println("결과 : " + answer);
+    }
+
+
+    private static class CustomSeparator{
+        private final Character separator;
+        private final boolean hasCustomSeparator;
+
+        public CustomSeparator(Character separator, boolean hasCustomSeparator){
+            this.separator = separator;
+            this.hasCustomSeparator = hasCustomSeparator;
+        }
+
+        public char getSeparator(){ return separator; }
+        public boolean hasCustomSeparator(){ return hasCustomSeparator; }
     }
 }
