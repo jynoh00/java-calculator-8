@@ -1,5 +1,18 @@
 # java-calculator-precourse
 
+## 목차
+- [프로젝트 정보](#프로젝트-정보)
+- [기능 구현](#기능-구현)
+- [구현 세부사항](#구현-세부사항)
+- [입력](#입력)
+- [출력](#출력)
+- [실행 결과 예시](#실행-결과-예시)
+- [코드 구조](#코드-구조)
+- [주요 메서드 설명](#주요-메서드-설명)
+- [내부 클래스](#내부-클래스)
+
+---
+
 ## 프로젝트 정보
 - **과정**: 우아한테크코스 프리코스 1주차
 - **주제**: 문자열 덧셈 계산기
@@ -87,7 +100,7 @@
 
 ---
 
-## 실행 결과 예시
+## 실행 결과
 
 ### 예시 1 - 기본 구분자 사용
 ```
@@ -145,3 +158,71 @@
 ```
 
 ---
+
+## 코드 구조
+
+### 메인 흐름: main()
+```
+main()
+  ├─ readInput()           // 문자열 입력 받아오기
+  ├─ calculate()           // 연산 수행
+  └─ printAnswer()         // 결과 출력
+```
+
+### 연산 프로세스: calculate()
+```
+calculate()
+  ├─ extractCustomSeparator()    // 커스텀 구분자 추출
+       ├─ checkCustomSeparatorFormat()    // 커스텀 구분자 정의 형식 확인
+       └─ checkSeparatorIsNotDigit()      // 커스텀 구분자 숫자 여부 확인
+  ├─ getNumberString()           // 숫자 문자열 추출 (커스텀 구분자 정의 제외 부분)
+  └─ sumNumbers()                // 덧셈 연산 수행
+       ├─ buildSeparatorPattern()     // 구분자 패턴 생성
+       ├─ checkNumberCount()          // 개수 검증
+       └─ parseAndCheckNumber()       // 숫자 파싱 및 검증
+```
+
+## 주요 메서드 설명
+
+### 입력된 문자열 처리
+| 메서드 | 설명                    |
+|--------|-----------------------|
+| `readInput()` | 사용자로부터 문자열 입력 받기      |
+| `calculate()` | 입력 문자열을 처리하여 합계 연산 수행 |
+| `printAnswer()` | 계산 결과 출력              |
+
+### 구분자 처리
+| 메서드 | 설명 |
+|--------|------|
+| `extractCustomSeparator()` | 커스텀 구분자 추출 및 검증 |
+| `checkCustomSeparatorFormat()` | 커스텀 구분자 형식 확인 |
+| `checkSeparatorIsNotDigit()` | 구분자가 숫자인지 확인 |
+| `buildSeparatorPattern()` | 정규식 패턴으로 구분자 설정 |
+| `getNumberString()` | 구분자 설정 부분 제거 후 숫자 문자열 반환 |
+
+### 계산 및 검증
+| 메서드 | 설명 |
+|--------|------|
+| `sumNumbers()` | 문자열을 분리하여 덧셈 수행 |
+| `parseAndCheckNumber()` | 문자열을 숫자로 변환 및 검증 |
+| `checkPositive()` | 양수 여부 확인 |
+| `checkNumberCount()` | 구분자와 숫자 개수 일치 여부 확인 |
+
+### 유틸리티
+| 메서드 | 설명 |
+|--------|------|
+| `countSeparators()` | 문자열 내 구분자 개수 계산 |
+| `isSeparator()` | 특정 문자가 구분자인지 판단 |
+
+## 내부 클래스
+
+### CustomSeparator
+커스텀 구분자 정보를 담는 클래스
+
+**필드:**
+- `separator`: 커스텀 구분자 문자
+- `hasCustomSeparator`: 커스텀 구분자 존재 여부
+
+**메서드:**
+- `getSeparator()`: 구분자 반환
+- `hasCustomSeparator()`: 커스텀 구분자 존재 여부 반환

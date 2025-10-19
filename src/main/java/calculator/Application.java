@@ -134,7 +134,7 @@ public class Application {
         System.out.println("결과 : " + answer);
     }
 
-
+    // 커스텀 구분자 정보 class
     private static class CustomSeparator{
         private final Character separator;
         private final boolean hasCustomSeparator;
